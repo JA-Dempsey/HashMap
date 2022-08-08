@@ -88,31 +88,45 @@ class HashMap:
 
     # ------------------------------------------------------------------ #
 
+    def _get_list(self, key: str) -> LinkedList:
+        """
+        Gets the Linked List at the specified hash index
+        found with the given key and the current hash function.
+        """
+        hash_index = self._hash_function(key) % self.get_capacity()
+        return self._buckets.get_at_index(hash_index)
     def put(self, key: str, value: object) -> None:
         """
         Method that updates the key-value pair in a hash. Values with keys
         already in hash table will be updated, otherwise a new key-value pair
         is inserted into the proper bucket.
         """
-        hash_index = self._hash_function(key)
-        l_list = self._buckets[hash_index]
 
-        # Get node if key exists in hash table
+        # Check the table load to see if a resize is needed
+        if self.table_load() > 8:
+            self.resize_table(self._capacity*2)
+
+        l_list = self._get_list(key)  # LL at hash(key)
         node = l_list.contains(key)
 
         # Update value or insert new key/value pair
         if node is not None:
             node.value = value
         else:
-            l_list.insert(key, value, l_list.get_head())
-
-        self._size += 1
+            l_list.insert(key, value)
+            self._size += 1
 
     def empty_buckets(self) -> int:
         """
         Method that returns the empty buckets in the hash table.
         """
-        return self.get_capacity() - self.get_size()
+        empty_count = 0
+        for index in range(self._capacity):
+            l_list = self._buckets.get_at_index(index)
+            if l_list.length() == 0:
+                empty_count += 1
+
+        return empty_count
 
     def table_load(self) -> float:
         """
@@ -135,18 +149,36 @@ class HashMap:
 
     def resize_table(self, new_capacity: int) -> None:
         """
-        TODO: Write this implementation
+        Method that changes the capacity of the internal hash table.
+        Ensures the new table will be a prime capacity.
         """
-        pass
+        if new_capacity < 1:
+            return
+
+        # Ensure new_capacity is prime
+        if self._is_prime(new_capacity):
+            self._capacity = new_capacity
+        else:
+            self._capacity = self._next_prime(new_capacity)
+
+        old_buckets = self._buckets  # Save current values
+
+        # Initialize new DynamicArray with given capacity
+        self._buckets = DynamicArray()
+        self._size = 0
+        for _ in range(self._capacity):
+            self._buckets.append(LinkedList())
+
+        for index in range(old_buckets.length()):
+            l_list = old_buckets.get_at_index(index)
+            for node in l_list:
+                self.put(node.key, node.value)
 
     def get(self, key: str) -> object:
         """
         Method that returns the associated value with the given key.
         """
-        hash_index = self._hash_function(key)
-        l_list = self._buckets[hash_index]
-
-        # Returns None if key not found
+        l_list = self._get_list(key)  # LL at hash(key)
         node = l_list.contains(key)
 
         if node is not None:
@@ -159,9 +191,7 @@ class HashMap:
         Method that returns true if the given key is in the hash map.
         Otherwise, it returns false.
         """
-        hash_index = self._hash_function(key)
-        l_list = self._buckets[hash_index]
-
+        l_list = self._get_list(key)
         node = l_list.contains(key)
 
         if node is not None:
@@ -171,9 +201,15 @@ class HashMap:
 
     def remove(self, key: str) -> None:
         """
-        TODO: Write this implementation
+        Method that removes the given key and value from the
+        hash map.
         """
-        pass
+        l_list = self._get_list(key)  # LL at hash(key)
+        node = l_list.contains(key)
+
+        if node is not None:
+            l_list.remove(node.key)
+
 
     def get_keys_and_values(self) -> DynamicArray:
         """
