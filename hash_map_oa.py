@@ -1,9 +1,10 @@
-# Name:
-# OSU Email:
+# Name: Andrew Dempsey
+# OSU Email: dempsjam@oregonstate.edu
 # Course: CS261 - Data Structures
-# Assignment:
-# Due Date:
-# Description:
+# Assignment: Assignemnt 6 - Part 2
+# Due Date: 8/9/2022
+# Description: Implementation of a HashMap using
+#              open address clash resolution.
 
 
 from a6_include import (DynamicArray, HashEntry,
@@ -86,62 +87,205 @@ class HashMap:
 
     # ------------------------------------------------------------------ #
 
+    def valid_put(self, entry: HashEntry or None) -> bool:
+        """
+        Helper method that determines if the given entry is a
+        valid location for a put. If the location is valid
+        it returns True, otherwise, it returns False.
+        Will reset tombstone in preparation for a put if
+        a tombstone is found.
+        """
+        if entry is None:
+            return True
+        else:
+            if entry.is_tombstone:
+                entry.is_tombstone = False
+                return True
+
+            return False
+
     def put(self, key: str, value: object) -> None:
         """
-        TODO: Write this implementation
+        Method that updates or adds a key/value pair in the
+        hash map. Given key already exists, the value is updated.
+        Otherwise, a proper position is found and then the key/value
+        pair is added to the hash map. Resized when the current load
+        factor is more than 0.5.
         """
         # remember, if the load factor is greater than or equal to 0.5,
         # resize the table before putting the new key/value pair
-        pass
+        if self.table_load() > 0.5:
+            self.resize_table(self._capacity * 2)
+
+        hash_index = self._hash_function(key) % self.get_capacity()
+        entry = self._buckets.get_at_index(hash_index)
+
+        j = 1  # Quadratic factor
+
+        # Find a valid entry location
+        is_valid_put = self.valid_put(entry)
+        while not is_valid_put:
+            # If key already in hash, update value
+            if entry.key == key:
+                entry.value = value
+                return
+
+            # Quadratic probing
+            hash_index = (hash_index + (j * j)) % self._capacity
+            j += 1
+            entry = self._buckets.get_at_index(hash_index)
+            is_valid_put = self.valid_put(entry)
+
+        self._buckets.set_at_index(hash_index, HashEntry(key, value))
+        self._size += 1
 
     def table_load(self) -> float:
         """
-        TODO: Write this implementation
+        Method that returns the current hash table load
+        factor.
         """
-        pass
+        return self.get_size() / self.get_capacity()
 
     def empty_buckets(self) -> int:
         """
-        TODO: Write this implementation
+        Method that returns the number of empty buckets
+        in the hash table.
         """
-        pass
+        empty_count = 0
+        for index in range(self._capacity):
+            entry = self._buckets.get_at_index(index)
+            if entry is None or entry.is_tombstone:
+                empty_count += 1
+
+        return empty_count
 
     def resize_table(self, new_capacity: int) -> None:
         """
-        TODO: Write this implementation
+        Method that changes the capacity of the internal hash table.
+        Then rehashes the current key/value pairs for the new capacity
+        values.
         """
         # remember to rehash non-deleted entries into new table
-        pass
+        if new_capacity < self._buckets.length():
+            return
+
+        # Ensure new_capacity is prime
+        if self._is_prime(new_capacity):
+            self._capacity = new_capacity
+        else:
+            self._capacity = self._next_prime(new_capacity)
+
+        old_buckets = self._buckets
+
+        # Reset buckets with new capacity
+        self._buckets = DynamicArray()
+        self._size = 0
+        for _ in range(self._capacity):
+            self._buckets.append(None)
+
+        # Rehash old values
+        for index in range(old_buckets.length()):
+            entry = old_buckets.get_at_index(index)
+
+            if entry is not None and not entry.is_tombstone:
+                self.put(entry.key, entry.value)
+
+    def _next_index(self, cur_index: int, quad_factor: int) -> (int, int):
+        """
+        Finds the next hash index to use given the current
+        index and the current quadratic factor value. Returns
+        a tuple (hash_index, quad_factor).
+        """
+
+        hash_index = (cur_index + (quad_factor * quad_factor)) % self._capacity
+        quad_factor += 1
+
+        return hash_index, quad_factor
 
     def get(self, key: str) -> object:
         """
-        TODO: Write this implementation
+        Method that returns the associated value with the
+        given key.
         """
-        pass
+        hash_index = self._hash_function(key) % self.get_capacity()
+        entry = self._buckets.get_at_index(hash_index)
+
+        j = 1  # Quadratic factor
+        while entry is not None:
+
+            if entry.key == key and not entry.is_tombstone:
+                return entry.value
+
+            hash_index, j = self._next_index(hash_index, j)
+            entry = self._buckets.get_at_index(hash_index)
+
+        return None
 
     def contains_key(self, key: str) -> bool:
         """
-        TODO: Write this implementation
+        Method that determines if a value associated with
+        the given key is found. If a key/value is found,
+        it returns True, otherwise, it returns False.
         """
-        pass
+        hash_index = self._hash_function(key) % self.get_capacity()
+        entry = self._buckets.get_at_index(hash_index)
+
+        j = 1  # Quadratic factor
+        while entry is not None:
+
+            if entry.key == key and not entry.is_tombstone:
+                return True
+
+            hash_index, j = self._next_index(hash_index, j)
+            entry = self._buckets.get_at_index(hash_index)
+
+        return False
 
     def remove(self, key: str) -> None:
         """
-        TODO: Write this implementation
+        Method that removes the given entry associated with the
+        given key.
         """
-        pass
+        hash_index = self._hash_function(key) % self.get_capacity()
+        entry = self._buckets.get_at_index(hash_index)
+
+        j = 1  # Quadratic factor
+        while entry is not None:
+
+            if entry.key == key:
+                entry.is_tombstone = True
+                self._size -= 1
+                return
+
+            hash_index, j = self._next_index(hash_index, j)
+            entry = self._buckets.get_at_index(hash_index)
 
     def clear(self) -> None:
         """
-        TODO: Write this implementation
+        Method that clears the contents of the hash map.
         """
-        pass
+        self._buckets = DynamicArray()
+        for _ in range(self._capacity):
+            self._buckets.append(None)
+
+        self._size = 0
 
     def get_keys_and_values(self) -> DynamicArray:
         """
-        TODO: Write this implementation
+        Method that returns a dynamic array where each index
+        contains a tuple of a key/value pair stored in the hash
+        map. Order not guaranteed.
         """
-        pass
+        tuple_output = DynamicArray()
+
+        for index in range(self._capacity):
+            entry = self._buckets.get_at_index(index)
+
+            if entry is not None and not entry.is_tombstone:
+                tuple_output.append((entry.key, entry.value))
+
+        return tuple_output
+
 
 
 # ------------------- BASIC TESTING ---------------------------------------- #
