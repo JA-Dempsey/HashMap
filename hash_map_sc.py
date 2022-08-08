@@ -87,14 +87,14 @@ class HashMap:
         return self._capacity
 
     # ------------------------------------------------------------------ #
-
-    def _get_list(self, key: str) -> LinkedList:
+    def get_list(self, key: str) -> LinkedList:
         """
         Gets the Linked List at the specified hash index
         found with the given key and the current hash function.
         """
         hash_index = self._hash_function(key) % self.get_capacity()
         return self._buckets.get_at_index(hash_index)
+
     def put(self, key: str, value: object) -> None:
         """
         Method that updates the key-value pair in a hash. Values with keys
@@ -106,7 +106,7 @@ class HashMap:
         if self.table_load() > 8:
             self.resize_table(self._capacity*2)
 
-        l_list = self._get_list(key)  # LL at hash(key)
+        l_list = self.get_list(key)  # LL at hash(key)
         node = l_list.contains(key)
 
         # Update value or insert new key/value pair
@@ -178,7 +178,7 @@ class HashMap:
         """
         Method that returns the associated value with the given key.
         """
-        l_list = self._get_list(key)  # LL at hash(key)
+        l_list = self.get_list(key)  # LL at hash(key)
         node = l_list.contains(key)
 
         if node is not None:
@@ -191,7 +191,7 @@ class HashMap:
         Method that returns true if the given key is in the hash map.
         Otherwise, it returns false.
         """
-        l_list = self._get_list(key)
+        l_list = self.get_list(key)
         node = l_list.contains(key)
 
         if node is not None:
@@ -204,27 +204,65 @@ class HashMap:
         Method that removes the given key and value from the
         hash map.
         """
-        l_list = self._get_list(key)  # LL at hash(key)
+        l_list = self.get_list(key)  # LL at hash(key)
         node = l_list.contains(key)
 
         if node is not None:
             l_list.remove(node.key)
 
-
     def get_keys_and_values(self) -> DynamicArray:
         """
-        TODO: Write this implementation
+        Method that returns a dynamic array containing tuples
+        of key/value pairs stored in the hash map. Order not
+        guaranteed.
         """
-        pass
+        tuple_output = DynamicArray()
+
+        for index in range(self._capacity):
+            l_list = self._buckets.get_at_index(index)
+
+            for node in l_list:
+                tuple_output.append((node.key, node.value))
+
+        return tuple_output
 
 
 def find_mode(da: DynamicArray) -> (DynamicArray, int):
     """
-    TODO: Write this implementation
+    Function that receives a DA, find the mode and the values
+    associated with that mode. Returns a tuple of:
+    1. DA of values associated with mode count
+    2. The int value of the ct of highest frequency
     """
-    # if you'd like to use a hash map,
-    # use this instance of your Separate Chaining HashMap
     map = HashMap()
+
+    for index in range(da.length()):
+        cur_val = map.get(da.get_at_index(index))
+
+        if cur_val is None:
+            cur_val = 1
+        else:
+            cur_val += 1
+
+        map.put(da.get_at_index(index), cur_val)
+
+    hash_da = map.get_keys_and_values()
+    mean_da = DynamicArray()
+
+    # Each index of hash_da will contain ([0], [1]) where:
+    # [0] = The key, or values in original input da
+    # [1] = # times key was found in the hash_da
+    largest_ct = 0
+    for index in range(hash_da.length()):
+        if hash_da.get_at_index(index)[1] > largest_ct:
+            mean_da = DynamicArray()
+            mean_da.append(hash_da.get_at_index(index)[0])
+            largest_ct = hash_da.get_at_index(index)[1]
+        elif hash_da.get_at_index(index)[1] == largest_ct:
+            mean_da.append(hash_da.get_at_index(index)[0])
+
+    return mean_da, largest_ct
+
 
 
 # ------------------- BASIC TESTING ---------------------------------------- #
