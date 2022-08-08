@@ -1,9 +1,10 @@
-# Name:
-# OSU Email:
+# Name: Andrew Dempsey
+# OSU Email: dempsjam@oregonstate.edu
 # Course: CS261 - Data Structures
-# Assignment:
-# Due Date:
-# Description:
+# Assignment: Assignment 6 - HashMap - Part 1
+# Due Date: 8/9/2022
+# Description: Implementation of a HashMaps with simple chaining and
+#              open addressing for solution of potential clashes.
 
 
 from a6_include import (DynamicArray, LinkedList,
@@ -262,7 +263,6 @@ def find_mode(da: DynamicArray) -> (DynamicArray, int):
             mean_da.append(hash_da.get_at_index(index)[0])
 
     return mean_da, largest_ct
-
 
 
 # ------------------- BASIC TESTING ---------------------------------------- #
