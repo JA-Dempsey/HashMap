@@ -3,8 +3,8 @@
 # Course: CS261 - Data Structures
 # Assignment: Assignment 6 - HashMap - Part 1
 # Due Date: 8/9/2022
-# Description: Implementation of a HashMaps with simple chaining and
-#              open addressing for solution of potential clashes.
+# Description: Implementation of a HashMaps with simple chaining
+#              for solution of potential clashes.
 
 
 from a6_include import (DynamicArray, LinkedList,
