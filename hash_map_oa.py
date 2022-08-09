@@ -86,7 +86,6 @@ class HashMap:
         return self._capacity
 
     # ------------------------------------------------------------------ #
-
     def valid_put(self, entry: HashEntry or None) -> bool:
         """
         Helper method that determines if the given entry is a
@@ -104,14 +103,14 @@ class HashMap:
             else:
                 return False
 
-    def _next_index(self, cur_index: int, quad_factor: int) -> (int, int):
+    def _next_index(self, start_index: int, quad_factor: int) -> (int, int):
         """
         Finds the next hash index to use given the current
         index and the current quadratic factor value. Returns
         a tuple (hash_index, quad_factor).
         """
 
-        hash_index = (cur_index + (quad_factor * quad_factor)) % self._capacity
+        hash_index = (start_index + (quad_factor * quad_factor)) % self._capacity
         quad_factor += 1
 
         return hash_index, quad_factor
@@ -129,8 +128,9 @@ class HashMap:
         if self.table_load() > 0.5:
             self.resize_table(self._capacity * 2)
 
-        hash_index = self._hash_function(key) % self.get_capacity()
-        entry = self._buckets.get_at_index(hash_index)
+        start_index = self._hash_function(key) % self.get_capacity()
+        entry = self._buckets.get_at_index(start_index)
+        hash_index = start_index
 
         j = 1  # Quadratic factor
 
@@ -143,7 +143,7 @@ class HashMap:
                 return
 
             # Quadratic probing
-            hash_index, j = self._next_index(hash_index, j)
+            hash_index, j = self._next_index(start_index, j)
             entry = self._buckets.get_at_index(hash_index)
             is_valid_put = self.valid_put(entry)
 
@@ -155,7 +155,7 @@ class HashMap:
         Method that returns the current hash table load
         factor.
         """
-        return float(self.get_size()) / float(self.get_capacity())
+        return self.get_size() / self.get_capacity()
 
     def empty_buckets(self) -> int:
         """
@@ -202,14 +202,14 @@ class HashMap:
                 self.put(entry.key, entry.value)
 
 
-
     def get(self, key: str) -> object:
         """
         Method that returns the associated value with the
         given key.
         """
-        hash_index = self._hash_function(key) % self.get_capacity()
-        entry = self._buckets.get_at_index(hash_index)
+        start_index = self._hash_function(key) % self.get_capacity()
+        entry = self._buckets.get_at_index(start_index)
+        hash_index = start_index
 
         j = 1  # Quadratic factor
         while entry is not None:
@@ -217,7 +217,7 @@ class HashMap:
             if entry.key == key and not entry.is_tombstone:
                 return entry.value
 
-            hash_index, j = self._next_index(hash_index, j)
+            hash_index, j = self._next_index(start_index, j)
             entry = self._buckets.get_at_index(hash_index)
 
         return None
@@ -228,8 +228,8 @@ class HashMap:
         the given key is found. If a key/value is found,
         it returns True, otherwise, it returns False.
         """
-        hash_index = self._hash_function(key) % self.get_capacity()
-        entry = self._buckets.get_at_index(hash_index)
+        start_index = self._hash_function(key) % self.get_capacity()
+        entry = self._buckets.get_at_index(start_index)
 
         j = 1  # Quadratic factor
         while entry is not None:
@@ -237,7 +237,7 @@ class HashMap:
             if entry.key == key and not entry.is_tombstone:
                 return True
 
-            hash_index, j = self._next_index(hash_index, j)
+            hash_index, j = self._next_index(start_index, j)
             entry = self._buckets.get_at_index(hash_index)
 
         return False
@@ -247,8 +247,8 @@ class HashMap:
         Method that removes the given entry associated with the
         given key.
         """
-        hash_index = self._hash_function(key) % self.get_capacity()
-        entry = self._buckets.get_at_index(hash_index)
+        start_index = self._hash_function(key) % self.get_capacity()
+        entry = self._buckets.get_at_index(start_index)
 
         j = 1  # Quadratic factor
         while entry is not None:
@@ -258,7 +258,7 @@ class HashMap:
                 self._size -= 1
                 return
 
-            hash_index, j = self._next_index(hash_index, j)
+            hash_index, j = self._next_index(start_index, j)
             entry = self._buckets.get_at_index(hash_index)
 
     def clear(self) -> None:
