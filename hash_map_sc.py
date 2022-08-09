@@ -210,6 +210,7 @@ class HashMap:
 
         if node is not None:
             l_list.remove(node.key)
+            self._size -= 1
 
     def get_keys_and_values(self) -> DynamicArray:
         """
