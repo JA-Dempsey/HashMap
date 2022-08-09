@@ -104,8 +104,8 @@ class HashMap:
         """
 
         # Check the table load to see if a resize is needed
- #       if self.table_load() > 8:
- #           self.resize_table(self._capacity*2)
+        # if self.table_load() > 8:
+        #     self.resize_table(self._capacity*2)
 
         l_list = self.get_list(key)  # LL at hash(key)
         node = l_list.contains(key)
