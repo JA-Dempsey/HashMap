@@ -101,8 +101,20 @@ class HashMap:
             if entry.is_tombstone:
                 entry.is_tombstone = False
                 return True
+            else:
+                return False
 
-            return False
+    def _next_index(self, cur_index: int, quad_factor: int) -> (int, int):
+        """
+        Finds the next hash index to use given the current
+        index and the current quadratic factor value. Returns
+        a tuple (hash_index, quad_factor).
+        """
+
+        hash_index = (cur_index + (quad_factor * quad_factor)) % self._capacity
+        quad_factor += 1
+
+        return hash_index, quad_factor
 
     def put(self, key: str, value: object) -> None:
         """
@@ -126,13 +138,12 @@ class HashMap:
         is_valid_put = self.valid_put(entry)
         while not is_valid_put:
             # If key already in hash, update value
-            if entry.key == key:
+            if entry.key == key and not entry.is_tombstone:
                 entry.value = value
                 return
 
             # Quadratic probing
-            hash_index = (hash_index + (j * j)) % self._capacity
-            j += 1
+            hash_index, j = self._next_index(hash_index, j)
             entry = self._buckets.get_at_index(hash_index)
             is_valid_put = self.valid_put(entry)
 
@@ -144,7 +155,7 @@ class HashMap:
         Method that returns the current hash table load
         factor.
         """
-        return self.get_size() / self.get_capacity()
+        return float(self.get_size()) / float(self.get_capacity())
 
     def empty_buckets(self) -> int:
         """
@@ -166,7 +177,7 @@ class HashMap:
         values.
         """
         # remember to rehash non-deleted entries into new table
-        if new_capacity < self._buckets.length():
+        if new_capacity < self._size:
             return
 
         # Ensure new_capacity is prime
@@ -190,17 +201,7 @@ class HashMap:
             if entry is not None and not entry.is_tombstone:
                 self.put(entry.key, entry.value)
 
-    def _next_index(self, cur_index: int, quad_factor: int) -> (int, int):
-        """
-        Finds the next hash index to use given the current
-        index and the current quadratic factor value. Returns
-        a tuple (hash_index, quad_factor).
-        """
 
-        hash_index = (cur_index + (quad_factor * quad_factor)) % self._capacity
-        quad_factor += 1
-
-        return hash_index, quad_factor
 
     def get(self, key: str) -> object:
         """
@@ -252,7 +253,7 @@ class HashMap:
         j = 1  # Quadratic factor
         while entry is not None:
 
-            if entry.key == key:
+            if entry.key == key and not entry.is_tombstone:
                 entry.is_tombstone = True
                 self._size -= 1
                 return
